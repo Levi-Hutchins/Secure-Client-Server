@@ -1,11 +1,19 @@
-
+import json
 import os
 import random, string
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, session
 app = Flask(__name__)
-
 isAdmin = False
+def load_data():
+    try:
+        with open("./data/users_db.json", 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
+def save_data(data):
+    with open("./data/users_db.json", 'w') as f:
+        json.dump(data, f)
 
 def generateRandomSecurePassword():
     all_characters = string.ascii_letters + string.digits + string.punctuation
@@ -13,7 +21,7 @@ def generateRandomSecurePassword():
         random.choice(string.ascii_lowercase),
         random.choice(string.ascii_uppercase),
         random.choice(string.digits),
-        random.choice(string.punctuation)
+        #random.choice(string.punctuation)
     ]
     
     for _ in range(13 - 4): 
@@ -22,19 +30,38 @@ def generateRandomSecurePassword():
     random.shuffle(password)
     return ''.join(password)
 
-authedUsers = {
-    'root': {
-        'password': 'RootP@ssword!',  
-        'group': 'admin',
-        'email': 'rootUser@hotmail.com'  
-    }
-}
+def setRootPassword():
+    data = load_data()
+    password = generateRandomSecurePassword()
+    print("------------------------")
+    print("Root Password:",password)
+    print("------------------------")
+
+    data["root"]["password"] = password
+    save_data(data)
+
+# authedUsers = {
+#     'root': {
+#         'password': rootPassword,  
+#         'group': 'admin',
+#         'email': ''
+#     }
+# }
+def setCurrentUser(username):
+    data = load_data()
+    data[username]["isLoggedIn"] = True
+    save_data(data)
 
     
 def authenticate(username, password):
-    if username in authedUsers and authedUsers[username]['password'] == password:
+    if username in load_data() and load_data()[username]['password'] == password:
+        setCurrentUser(username)
+
+
         return True
     return False
+
+
 
 @app.route("/")
 def hello_world():
@@ -102,13 +129,20 @@ def json_data():
 def admin_console():
     username = request.form.get("username")
     password = request.form.get("password")
-    if authenticate(username, password) and authedUsers[username]['group'] == 'admin':
+    if authenticate(username, password) and load_data()[username]['group'] == 'admin':
         # Admin functionality here
         # For now, we just return a placeholder message
-        isAdmin = True
+
         print(isAdmin)
-        return "Admin Console - Welcome, Admin!"
+        return "\nAdmin Login Successful\nWelcome, Admin!\n"
     return "Access denied"
+
+
+@app.route('/admin/add_user', methods=['POST'])
+def add_user():
+    return
+
+
 
 
 @app.route("/audit_expenses", methods=["POST"])
@@ -178,7 +212,37 @@ def roster_shift():
         return "Shift rostered"
     return "No shift given"
 
+@app.route("/adminStatus")
+def getAdminStatus():
+    data = load_data()
+    for user in data:
+        if data[user]['isLoggedIn'] == True and data[user]['group'] == "admin":
+            return str(True)
+    return str(False)
+
+@app.route("/logOutUsers")
+def logOut():
+    data = load_data()
+    for user in data:
+        data[user]['isLoggedIn'] = False
+    save_data(data)
+    return "Logged Out"
+
+
+@app.route("/dataview", methods=["GET"])
+def data_view():
+    # Try to read the JSON file and return its contents
+    try:
+        with open('./data/users_db.json', 'r') as file:
+            users_data = json.load(file)
+        return users_data
+    except FileNotFoundError:
+        return "No data found.", 404
+    except json.JSONDecodeError:
+        return "Error decoding the JSON file.", 500
+
 
 if __name__ == "__main__":
+    setRootPassword()
     os.makedirs("data/", exist_ok=True)
     app.run(host="127.0.0.1", port="2250")

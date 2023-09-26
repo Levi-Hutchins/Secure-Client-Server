@@ -1,12 +1,12 @@
 import requests
-def testAdminLogin():
+def adminLogin(password):
     incorrectPayload = {
         "username": "root",
         "password": "admin123"
     }
-    correctPayLoad = {
+    loginPayload = {
         "username": "root",
-        "password": "RootP@ssword!"
+        "password": pas
     }
     r = requests.post("http://127.0.0.1:2250/admin_console", data=incorrectPayload)
     print(r.text)
