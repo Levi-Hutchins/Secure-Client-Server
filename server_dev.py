@@ -3,7 +3,8 @@ import os
 import random, string
 from flask import Flask, request, redirect, url_for, session
 app = Flask(__name__)
-isAdmin = False
+
+# Easy function call to open and load data to make changes later on
 def load_data():
     try:
         with open("./data/users_db.json", 'r') as f:
@@ -11,54 +12,46 @@ def load_data():
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
+# Easy function call to save data after manipulation
 def save_data(data):
     with open("./data/users_db.json", 'w') as f:
         json.dump(data, f)
 
+# Generate secure random password
 def generateRandomSecurePassword():
     all_characters = string.ascii_letters + string.digits + string.punctuation
     password = [
         random.choice(string.ascii_lowercase),
         random.choice(string.ascii_uppercase),
         random.choice(string.digits),
-        #random.choice(string.punctuation)
+        random.choice(string.punctuation)
     ]
-    
-    for _ in range(13 - 4): 
-        password.append(random.choice(all_characters))
-        
+    for _ in range(13 - 4): password.append(random.choice(all_characters))
     random.shuffle(password)
     return ''.join(password)
 
+# Sets the root user password to the randomly generated one and saves to the database
 def setRootPassword():
     data = load_data()
     password = generateRandomSecurePassword()
     print("------------------------")
     print("Root Password:",password)
     print("------------------------")
-
     data["root"]["password"] = password
     save_data(data)
 
-# authedUsers = {
-#     'root': {
-#         'password': rootPassword,  
-#         'group': 'admin',
-#         'email': ''
-#     }
-# }
+# On user login set isLoggedIn field to True to idenitify which user is logged in
 def setCurrentUser(username):
     data = load_data()
     data[username]["isLoggedIn"] = True
     save_data(data)
 
-    
+# Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
     if username in load_data() and load_data()[username]['password'] == password:
         setCurrentUser(username)
-
-
         return True
+    
     return False
 
 
@@ -133,7 +126,6 @@ def admin_console():
         # Admin functionality here
         # For now, we just return a placeholder message
 
-        print(isAdmin)
         return "\nAdmin Login Successful\nWelcome, Admin!\n"
     return "Access denied"
 
