@@ -118,7 +118,7 @@ def json_data():
 #### End example functions
 
 
-@app.route("/admin_console", methods=["POST"])
+@app.route("/admin_login", methods=["POST"])
 def admin_console():
     username = request.form.get("username")
     password = request.form.get("password")
@@ -130,10 +130,27 @@ def admin_console():
     return "Access denied"
 
 
+
+
 @app.route('/admin/add_user', methods=['POST'])
 def add_user():
-    return
+    username = request.form.get("username")
+    email = request.form.get("email_address")
+    print(username, email)
+    return str("OK")
 
+@app.route('/admin/modify_user', methods=['POST'])
+def modify_user():
+    username = request.form.get("username")
+    groupChange = request.form.get("group")
+    print(username, groupChange)
+    return str("OK")
+
+@app.route('/admin/delete_user', methods=['POST'])
+def delete_user():
+    username = request.form.get("username")
+    print(username)
+    return str("OK")
 
 
 
