@@ -2,6 +2,7 @@ import json
 import os
 import random, string
 from flask import Flask, request, redirect, url_for, session
+import HashFunction
 app = Flask(__name__)
 
 # Easy function call to open and load data to make changes later on
@@ -37,7 +38,7 @@ def setRootPassword():
     print("------------------------")
     print("Root Password:",password)
     print("------------------------")
-    data["root"]["password"] = password
+    data["root"]["password"] = HashFunction.hash_password(password)
     save_data(data)
 
 # On user login set isLoggedIn field to True to idenitify which user is logged in
@@ -48,13 +49,18 @@ def setCurrentUser(username):
 
 # Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
-    if username in load_data() and load_data()[username]['password'] == password:
+    if username in load_data() and HashFunction.check_password(load_data()[username]['password'],password):
         setCurrentUser(username)
         return True
     
     return False
 
 
+def resetDB():
+    data = load_data()
+    for user in data:
+        data[user]['isLoggedIn'] = False
+    save_data(data)
 
 @app.route("/")
 def hello_world():
@@ -119,14 +125,14 @@ def json_data():
 
 
 @app.route("/admin_login", methods=["POST"])
-def admin_console():
+def admin_login():
     username = request.form.get("username")
     password = request.form.get("password")
     if authenticate(username, password) and load_data()[username]['group'] == 'admin':
         # Admin functionality here
         # For now, we just return a placeholder message
 
-        return "\nAdmin Login Successful\nWelcome, Admin!\n"
+        return "Access Granted"
     return "Access denied"
 
 
@@ -134,10 +140,20 @@ def admin_console():
 
 @app.route('/admin/add_user', methods=['POST'])
 def add_user():
+    data = load_data()
     username = request.form.get("username")
     email = request.form.get("email_address")
-    print(username, email)
-    return str("OK")
+    hashedPassword = HashFunction.hash_password(generateRandomSecurePassword())
+    addedUser = {
+        "password": hashedPassword, 
+        "group": "users",
+        "email": email, 
+        "isLoggedIn": False
+    }
+    data[username] = addedUser
+    save_data(data)
+
+    return "\n ! User Added ! \n"
 
 @app.route('/admin/modify_user', methods=['POST'])
 def modify_user():
@@ -149,8 +165,13 @@ def modify_user():
 @app.route('/admin/delete_user', methods=['POST'])
 def delete_user():
     username = request.form.get("username")
-    print(username)
-    return str("OK")
+    data = load_data()
+    if username in data:
+        del data[username]
+        save_data(data)
+        return "\n ! User Removed ! \n"
+    return "\n ! User Not Found ! \n"
+
 
 
 
@@ -252,6 +273,7 @@ def data_view():
 
 
 if __name__ == "__main__":
+    resetDB()
     setRootPassword()
     os.makedirs("data/", exist_ok=True)
     app.run(host="127.0.0.1", port="2250")

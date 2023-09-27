@@ -7,8 +7,14 @@ def adminLogin(password):
         "password": password
     }
 
-    r = requests.post("http://127.0.0.1:2250/admin_login", data=loginPayload)
-    print(r.text)
+    r = requests.post("http://127.0.0.1:2250/admin_login", data=loginPayload).text
+    if r == "Access Granted": 
+        print("\n ! Access Granted !\n")
+        return True
+    else: 
+        print("\n ! Access Denied !\n")
+        return False
+    
 def adminConsole():
     print("--------------------------")
     print("Admin Controls:")
@@ -26,7 +32,7 @@ def adminConsole():
         r = requests.post("http://127.0.0.1:2250/admin/modify_user", data=userData)
         print(r.text)
     if user_input[0] == "delete": 
-        userData = {"username":user_input[0],}
+        userData = {"username":user_input[1],}
         r = requests.post("http://127.0.0.1:2250/admin/delete_user", data=userData)
         print(r.text)
 
@@ -46,36 +52,29 @@ def logOut():
 
 
 loopCount = 0
+loggedInFlag = False
+
 if __name__ == "__main__":
     while True:
         if loopCount == 0:
             print("===============================================")
             print("Welcome to the Secure Client - Server Program !")
             print("===============================================")
-            print("Root Login:")
-            #rootUsername= input("Root Username (root): ")
-
             rootPassword= input("Password for Root: ") # Is printed on server start up
-            adminLogin(rootPassword) 
+            while not adminLogin(rootPassword):
+                print("Incorrect Password Try Again:") 
+                rootPassword= input("Password for Root: ") 
+
         if isAdmin():
             adminConsole()
         loopCount += 1
-            # inp = input("log out?")
-            # if inp == "yes":
-            #      logOut()
-        # print()
-        # print("---------------------------------------------")
-        # print("Please Select one of the options:")
-        # print("NOTE: You will only be able to select on ")
-        # print("<add user>")
-        # print("<modify user>")
-        # print("<delete user>")
+           
         
         
 
 
         
-        # loopCount += 1
+
 
 
 

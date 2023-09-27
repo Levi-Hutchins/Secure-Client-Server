@@ -1,30 +1,36 @@
 import bcrypt
+import base64
 
-def hash_password(password: str) -> bytes:
+def hash_password(password: str) -> str:
     """
-    Hash a password using bcrypt, and return the hashed password.
+    Hash a password using bcrypt, and return the hashed password as a base64 encoded string.
     """
     # Convert the password to bytes and hash it
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-    return hashed
+    # Convert the byte hash to a base64 encoded string
+    return base64.b64encode(hashed).decode('utf-8')
 
-def check_password(hashed_password: bytes, user_password: str) -> bool:
+def check_password(hashed_password_str: str, user_password: str) -> bool:
     """
-    Check a user's password against the hashed version.
+    Check a user's password against the hashed version provided as a base64 encoded string.
     """
     try:
+        # Convert the base64 encoded hash back to bytes
+        hashed_password = base64.b64decode(hashed_password_str)
+
         # Note: bcrypt.checkpw will return True if the passwords match, otherwise it will return False
         return bcrypt.checkpw(user_password.encode('utf-8'), hashed_password)
     except ValueError:
         return False
+
 # To hash a password
-hashed_pw = hash_password("my_secure_password")
-print(hashed_pw)
-hashed_pw2 = hash_password("my_secure_password ")
-print(hashed_pw2)
+hashed_pw_str = hash_password("my_secure_password")
+
+print(hashed_pw_str)
+
 # To check a password
-if check_password(hashed_pw, "my_secure_password"):
+if check_password(hashed_pw_str, "my_secure_password"):
     print("Password matches!")
 else:
     print("Invalid password!")
