@@ -21,7 +21,7 @@ def adminConsole():
     print("Add User:     add <username> <email_address>")
     print("Modify User:  modify <username> <change_group>")
     print("Delete User:  delete <username>")
-    print("Log Out: logout")
+    print("Log In: <username> <password>")
     print("--------------------------")
     user_input = input(">>> ").strip().split(' ', 2)
     if user_input[0] == "add":
@@ -29,7 +29,7 @@ def adminConsole():
         r = requests.post("http://127.0.0.1:2250/admin/add_user", data=userData)
         print(r.text)
     if user_input[0] == "modify": 
-        userData = {"username":user_input[0],"group": user_input[1]}
+        userData = {"username":user_input[1],"group": user_input[2]}
         r = requests.post("http://127.0.0.1:2250/admin/modify_user", data=userData)
         print(r.text)
     if user_input[0] == "delete": 

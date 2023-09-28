@@ -163,8 +163,12 @@ def add_user():
 def modify_user():
     username = request.form.get("username")
     groupChange = request.form.get("group")
-    print(username, groupChange)
-    return str("OK")
+    data = load_data()
+    if username in data:
+        data[username]["group"] = groupChange
+        save_data(data)
+        return "\n ! User Modified ! \n"
+    return "\n ! User Not Found ! \n"
 
 @app.route('/admin/delete_user', methods=['POST'])
 def delete_user():
