@@ -3,7 +3,7 @@ import os
 import random, string
 from flask import Flask, request, redirect, url_for, session
 import HashFunction
-import emailUser
+import mailGun
 app = Flask(__name__)
 
 # Easy function call to open and load data to make changes later on
@@ -18,6 +18,10 @@ def load_data():
 def save_data(data):
     with open("./data/users_db.json", 'w') as f:
         json.dump(data, f)
+
+# Generates random code used for MFA
+def generate_random_code(length=6):
+    return ''.join(random.choice(string.digits) for _ in range(length))
 
 # Generate secure random password
 def generateRandomSecurePassword():
@@ -43,15 +47,27 @@ def setRootPassword():
     save_data(data)
 
 # On user login set isLoggedIn field to True to idenitify which user is logged in
-def setCurrentUser(username):
+def set_current_user(username):
     data = load_data()
+    for user in data:
+        if data[user]["isLoggedIn"] == True:
+            data[user]["isLoggedIn"] = False
+
     data[username]["isLoggedIn"] = True
     save_data(data)
+
+def logout_current_user():
+    data = load_data()
+    for user in data:
+        if data[user]["isLoggedIn"] == True:
+            data[user]["isLoggedIn"] = False
+            save_data(data)
+    return
 
 # Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
     if username in load_data() and HashFunction.check_password(load_data()[username]['password'],password):
-        setCurrentUser(username)
+        set_current_user(username)
         return True
     
     return False
@@ -136,6 +152,30 @@ def admin_login():
         return "Access Granted"
     return "Access denied"
 
+@app.route("/user_login", methods=["POST"])
+def user_login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    if authenticate(username, password):
+        mfa_code = generate_random_code()
+        data = load_data()
+        if username in data:
+            email = data[username]["email"]
+            mailGun.sendVerifcationCode(username, email, mfa_code)
+            data[username]["MFAcode"] = mfa_code
+            save_data(data)
+        return "True"
+    else: return "False"
+@app.route("/verify_login", methods=["POST"])
+def verify_login():
+    username = request.form.get("username")
+    mfa_code = request.form.get("code")
+    if username in load_data():
+        if load_data()[username]["MFAcode"] == mfa_code:
+            return "\n ! Access Granted ! \n"
+        return "\n ! Access Denied ! \n"
+    "\n ! User Not Found ! \n"
+
 
 
 
@@ -153,7 +193,7 @@ def add_user():
         "isLoggedIn": False
     }
     data[username] = addedUser
-    emailUser.sendUserDetails(username,generatedPassword,email)
+    mailGun.sendUserDetails(username,generatedPassword,email)
     save_data(data)
 
 

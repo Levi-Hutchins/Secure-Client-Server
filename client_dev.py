@@ -21,7 +21,7 @@ def adminConsole():
     print("Add User:     add <username> <email_address>")
     print("Modify User:  modify <username> <change_group>")
     print("Delete User:  delete <username>")
-    print("Log In: <username> <password>")
+    print("Log In:       login <username> <password>")
     print("--------------------------")
     user_input = input(">>> ").strip().split(' ', 2)
     if user_input[0] == "add":
@@ -33,11 +33,26 @@ def adminConsole():
         r = requests.post("http://127.0.0.1:2250/admin/modify_user", data=userData)
         print(r.text)
     if user_input[0] == "delete": 
-        userData = {"username":user_input[1],}
+        userData = {"username":user_input[1]}
         r = requests.post("http://127.0.0.1:2250/admin/delete_user", data=userData)
         print(r.text)
-    if user_input[0] == "logout":
-        print(requests.get("http://127.0.0.1:2250/logout_user").text)
+    if user_input[0] == "login":
+        userData = {"username":user_input[1],"password": user_input[2]}
+        if requests.post("http://127.0.0.1:2250/user_login",data=userData).text == "True":
+            print("You were sent a verification code:")
+            code_input = input(">>> ")
+            userData = {"username":user_input[1],"code": code_input}
+            r = requests.post("http://127.0.0.1:2250/verify_login",data=userData).text
+            while r == "\n ! Access Denied ! \n":
+                print("Incorrect Code Try Again:")
+                code_input = input(">>> ")
+                userData = {"username":user_input[1],"code": code_input}
+                r = requests.post("http://127.0.0.1:2250/verify_login",data=userData).text
+                print(r)
+
+
+
+
 
 def userConsole():
     print("------------------------")
