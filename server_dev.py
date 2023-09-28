@@ -1,12 +1,25 @@
-
+import json
 import os
 import random, string
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, session
+import HashFunction
+import emailUser
 app = Flask(__name__)
 
-isAdmin = False
+# Easy function call to open and load data to make changes later on
+def load_data():
+    try:
+        with open("./data/users_db.json", 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
+# Easy function call to save data after manipulation
+def save_data(data):
+    with open("./data/users_db.json", 'w') as f:
+        json.dump(data, f)
 
+# Generate secure random password
 def generateRandomSecurePassword():
     all_characters = string.ascii_letters + string.digits + string.punctuation
     password = [
@@ -15,26 +28,40 @@ def generateRandomSecurePassword():
         random.choice(string.digits),
         random.choice(string.punctuation)
     ]
-    
-    for _ in range(13 - 4): 
-        password.append(random.choice(all_characters))
-        
+    for _ in range(13 - 4): password.append(random.choice(all_characters))
     random.shuffle(password)
     return ''.join(password)
 
-authedUsers = {
-    'root': {
-        'password': 'RootP@ssword!',  
-        'group': 'admin',
-        'email': 'rootUser@hotmail.com'  
-    }
-}
+# Sets the root user password to the randomly generated one and saves to the database
+def setRootPassword():
+    data = load_data()
+    password = generateRandomSecurePassword()
+    print("------------------------")
+    print("Root Password:",password)
+    print("------------------------")
+    data["root"]["password"] = HashFunction.hash_password(password)
+    save_data(data)
 
-    
+# On user login set isLoggedIn field to True to idenitify which user is logged in
+def setCurrentUser(username):
+    data = load_data()
+    data[username]["isLoggedIn"] = True
+    save_data(data)
+
+# Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
-    if username in authedUsers and authedUsers[username]['password'] == password:
+    if username in load_data() and HashFunction.check_password(load_data()[username]['password'],password):
+        setCurrentUser(username)
         return True
+    
     return False
+
+
+def resetDB():
+    data = load_data()
+    for user in data:
+        data[user]['isLoggedIn'] = False
+    save_data(data)
 
 @app.route("/")
 def hello_world():
@@ -98,17 +125,58 @@ def json_data():
 #### End example functions
 
 
-@app.route("/admin_console", methods=["POST"])
-def admin_console():
+@app.route("/admin_login", methods=["POST"])
+def admin_login():
     username = request.form.get("username")
     password = request.form.get("password")
-    if authenticate(username, password) and authedUsers[username]['group'] == 'admin':
+    if authenticate(username, password) and load_data()[username]['group'] == 'admin':
         # Admin functionality here
         # For now, we just return a placeholder message
-        isAdmin = True
-        print(isAdmin)
-        return "Admin Console - Welcome, Admin!"
+
+        return "Access Granted"
     return "Access denied"
+
+
+
+
+@app.route('/admin/add_user', methods=['POST'])
+def add_user():
+    data = load_data()
+    username = request.form.get("username")
+    email = request.form.get("email_address")
+    generatedPassword = generateRandomSecurePassword()
+    hashedPassword = HashFunction.hash_password(generatedPassword)
+    addedUser = {
+        "password": hashedPassword, 
+        "group": "users",
+        "email": email, 
+        "isLoggedIn": False
+    }
+    data[username] = addedUser
+    emailUser.sendUserDetails(username,generatedPassword,email)
+    save_data(data)
+
+
+    return "\n ! User Added & Emailed  ! \n"
+
+@app.route('/admin/modify_user', methods=['POST'])
+def modify_user():
+    username = request.form.get("username")
+    groupChange = request.form.get("group")
+    print(username, groupChange)
+    return str("OK")
+
+@app.route('/admin/delete_user', methods=['POST'])
+def delete_user():
+    username = request.form.get("username")
+    data = load_data()
+    if username in data:
+        del data[username]
+        save_data(data)
+        return "\n ! User Removed ! \n"
+    return "\n ! User Not Found ! \n"
+
+
 
 
 @app.route("/audit_expenses", methods=["POST"])
@@ -178,7 +246,38 @@ def roster_shift():
         return "Shift rostered"
     return "No shift given"
 
+@app.route("/adminStatus")
+def getAdminStatus():
+    data = load_data()
+    for user in data:
+        if data[user]['isLoggedIn'] == True and data[user]['group'] == "admin":
+            return str(True)
+    return str(False)
+
+@app.route("/logout_user")
+def logOut():
+    data = load_data()
+    for user in data:
+        data[user]['isLoggedIn'] = False
+    save_data(data)
+    return "\n ! Logged Out ! \n"
+
+
+@app.route("/dataview", methods=["GET"])
+def data_view():
+    # Try to read the JSON file and return its contents
+    try:
+        with open('./data/users_db.json', 'r') as file:
+            users_data = json.load(file)
+        return users_data
+    except FileNotFoundError:
+        return "No data found.", 404
+    except json.JSONDecodeError:
+        return "Error decoding the JSON file.", 500
+
 
 if __name__ == "__main__":
+    resetDB()
+    setRootPassword()
     os.makedirs("data/", exist_ok=True)
     app.run(host="127.0.0.1", port="2250")
