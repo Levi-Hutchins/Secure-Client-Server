@@ -3,6 +3,7 @@ import os
 import random, string
 from flask import Flask, request, redirect, url_for, session
 import HashFunction
+import emailUser
 app = Flask(__name__)
 
 # Easy function call to open and load data to make changes later on
@@ -143,7 +144,8 @@ def add_user():
     data = load_data()
     username = request.form.get("username")
     email = request.form.get("email_address")
-    hashedPassword = HashFunction.hash_password(generateRandomSecurePassword())
+    generatedPassword = generateRandomSecurePassword()
+    hashedPassword = HashFunction.hash_password(generatedPassword)
     addedUser = {
         "password": hashedPassword, 
         "group": "users",
@@ -151,9 +153,11 @@ def add_user():
         "isLoggedIn": False
     }
     data[username] = addedUser
+    emailUser.sendUserDetails(username,generatedPassword,email)
     save_data(data)
 
-    return "\n ! User Added ! \n"
+
+    return "\n ! User Added & Emailed  ! \n"
 
 @app.route('/admin/modify_user', methods=['POST'])
 def modify_user():
@@ -250,13 +254,13 @@ def getAdminStatus():
             return str(True)
     return str(False)
 
-@app.route("/logOutUsers")
+@app.route("/logout_user")
 def logOut():
     data = load_data()
     for user in data:
         data[user]['isLoggedIn'] = False
     save_data(data)
-    return "Logged Out"
+    return "\n ! Logged Out ! \n"
 
 
 @app.route("/dataview", methods=["GET"])

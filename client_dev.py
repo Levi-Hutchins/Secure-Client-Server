@@ -21,6 +21,7 @@ def adminConsole():
     print("Add User:     add <username> <email_address>")
     print("Modify User:  modify <username> <change_group>")
     print("Delete User:  delete <username>")
+    print("Log Out: logout")
     print("--------------------------")
     user_input = input(">>> ").strip().split(' ', 2)
     if user_input[0] == "add":
@@ -35,9 +36,15 @@ def adminConsole():
         userData = {"username":user_input[1],}
         r = requests.post("http://127.0.0.1:2250/admin/delete_user", data=userData)
         print(r.text)
+    if user_input[0] == "logout":
+        print(requests.get("http://127.0.0.1:2250/logout_user").text)
 
-    # r = requests.post("http://127.0.0.1:2250/admin_console", data=user_input)
-    # print(r.text)
+def userConsole():
+    print("------------------------")
+    print("User Controls:")
+    print("Log In: <username> <password>")
+    print("------------------------")
+    user_input = input(">>> ").strip().split(' ', 2)
 
 
 def isAdmin():
@@ -46,14 +53,9 @@ def isAdmin():
     else: return False
     
 
-def logOut():
-    r = requests.get("http://127.0.0.1:2250/logOutUsers")
-    print(r.text)
-
-
 loopCount = 0
 loggedInFlag = False
-
+# TODO: add exit option if selected logs out all users
 if __name__ == "__main__":
     while True:
         if loopCount == 0:
@@ -67,6 +69,8 @@ if __name__ == "__main__":
 
         if isAdmin():
             adminConsole()
+        else:
+            userConsole()
         loopCount += 1
            
         

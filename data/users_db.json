@@ -1,6 +1,1 @@
-{"root": 
-{"password": "JDJiJDEyJDFxWkRXa3ZHMWw1RG9ZQUtRMWlISk9pTldtaDBIbi9aVy5RRWdYT01XU2JPSU00cDg1TUt5",
- "group": "admin",
-"email": "test@test.com", 
-  "isLoggedIn": true}
-}
+{"root": {"password": "JDJiJDEyJFVRRTNJYWRmRnYxYThlenJQSjlqNnVzb3NFcklSeDVVc3BTWS55Z0NvUDRxeTJzWVoyWUFp", "group": "admin", "email": "test@test.com", "isLoggedIn": false}, "TestUser": {"password": "JDJiJDEyJEhNZVV1ZTFzcmgyRGFmU1R1bXBtTHVFSWVvTEdKUFlnTzY3bTRsaFlsZXdDSElEZEU2WDY2", "group": "users", "email": "ofingy101@gmail.com", "isLoggedIn": false}, "JamesSmith": {"password": "JDJiJDEyJHlvRGpQdTVKMHBvUzdBaTlUeGYyMU9jY1NMVVFjUnNtem1ZUW9RSVhWTWRjNjZXb2pNemtL", "group": "users", "email": "ofingy101@gmail.com", "isLoggedIn": false}, "James11": {"password": "JDJiJDEyJEdsSHBqcGFvME9rNnFKeG8zOHZlMGVyTy50b3k0SlpQTGw2elJYYjFEVllURkNFWmZyVjNX", "group": "users", "email": "ofingy101@gmail.com", "isLoggedIn": false}, "bobbbbyyy": {"password": "JDJiJDEyJC9ZRzNybExGbU5QYnAuSG5VaGRQYU9UMUM2VzJmNC9pSnE5SjMyU09PQW9wbWRlZmVTc015", "group": "users", "email": "ofingy101@gmail.com", "isLoggedIn": false}}
