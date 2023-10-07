@@ -35,7 +35,6 @@ def is_token_valid(username):
 
     if username in data and "token" in data[username] and "token_expiry" in data[username]:
         if get_current_timestamp() < data[username]["token_expiry"]:
-            print("her2")
 
             return True
     return False
@@ -81,25 +80,24 @@ def setRootPassword():
 
 # On user login set isLoggedIn field to True to idenitify which user is logged in
 def set_current_user(username):
+    logout_current_user()
+    print("here")
     data = load_data()
-    for user in data:
-        if data[user]["isLoggedIn"] == True:
-            data[user]["isLoggedIn"] = False
-
-    data[username]["isLoggedIn"] = True
+    data[username]["isLoggedIn"] = "true"
     save_data(data)
 
 def logout_current_user():
     data = load_data()
     for user in data:
-        if data[user]["isLoggedIn"] == True:
-            data[user]["isLoggedIn"] = False
+        if data[user]["isLoggedIn"] == "true":
+            data[user]["isLoggedIn"] = "false"
             save_data(data)
     return
 
 # Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
     if username in load_data() and HashFunction.check_password(load_data()[username]['password'],password):
+        print("here1")
         set_current_user(username)
         return True
     
@@ -193,7 +191,7 @@ def user_login():
     notIV = request.form.get("notIV")
     password = decrypt(request.form.get("password"),notIV)
     # Check if token exists and is valid
-    if is_token_valid(username):
+    if authenticate(username, password) and is_token_valid(username):
         return "Token Valid"
     
     if authenticate(username, password):
@@ -341,7 +339,7 @@ def roster_shift():
 def getAdminStatus():
     data = load_data()
     for user in data:
-        if data[user]['isLoggedIn'] == True and data[user]['group'] == "admin":
+        if data[user]['isLoggedIn'] == "true" and data[user]['group'] == "admin":
             return str(True)
     return str(False)
 

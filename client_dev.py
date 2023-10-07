@@ -58,7 +58,7 @@ def userLogin(user_input):
             print(r)
     
     if r == "Token Valid":
-        print("You Token is still vaid")
+        print("\n ! Access Granted !\n Your Token is still valid\n")
 
     
 def adminConsole():

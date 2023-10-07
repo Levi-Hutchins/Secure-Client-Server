@@ -15,5 +15,5 @@ def sendVerifcationCode(username, email, code):
 			auth=("api", "a487497d74cc494deb702431126b5ba8-db137ccd-10c7f37e"),
 			data={"from": "Mailgun Sandbox <postmaster@sandbox74dfba5af7c34e2091e3a846c771a53b.mailgun.org>",
 				"to": str(email),
-				"subject": "Find User Details Below",
+				"subject": "Multi-Factor Authentication",
 				"text": f"Hello {username},\nHere is your Verification Code: {code}"})
