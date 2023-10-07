@@ -1,30 +1,11 @@
 import requests
-import base64
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, modes
-from cryptography.hazmat.primitives.ciphers import Cipher
-import os
-SECRET_KEY = b'6TXPMrtJBnkiJ8mo'
-
 current_token = None
-def encrypt_before_transmission(encryptMe):
-    iv = os.urandom(16)
-    cipher = Cipher(algorithms.AES(SECRET_KEY), modes.CFB(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    ciphertext = encryptor.update(encryptMe.encode()) + encryptor.finalize()
 
-    # Base64 encode the ciphertext and IV
-    encoded_ciphertext = base64.b64encode(ciphertext).decode('utf-8')
-    encoded_iv = base64.b64encode(iv).decode('utf-8')
-
-    return encoded_ciphertext, encoded_iv
 
 def adminLogin(password):
-    sensitive = encrypt_before_transmission(password)
     loginPayload = {
         "username": "root",
-        "password":  sensitive[0],
-        "notIV": sensitive[1]
+        "password": password
     }
 
     r = requests.post("http://127.0.0.1:2250/admin_login", data=loginPayload).text
@@ -36,12 +17,8 @@ def adminLogin(password):
         return False
 
 def userLogin(user_input):
-    sensitive = encrypt_before_transmission(user_input[2])
     global current_token
-    userData = {
-        "username":user_input[1],
-        "password": sensitive[0],
-        "notIV": sensitive[1] }
+    userData = {"username":user_input[1],"password": user_input[2]}
 
     r = requests.post("http://127.0.0.1:2250/user_login",data=userData).text
     if r == "True":
@@ -58,7 +35,7 @@ def userLogin(user_input):
             print(r)
     
     if r == "Token Valid":
-        print("\n ! Access Granted !\n Your Token is still valid\n")
+        print("You Token is still vaid")
 
     
 def adminConsole():

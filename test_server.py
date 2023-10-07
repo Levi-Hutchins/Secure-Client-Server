@@ -1,28 +1,14 @@
 
 import json
 import os
-import base64
 import random, string
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, modes
-from cryptography.hazmat.primitives.ciphers import Cipher
 from flask import Flask, request, redirect, url_for, session
 import HashFunction
 import mailGun
 app = Flask(__name__)
 import time
 
-SECRET_KEY = b'6TXPMrtJBnkiJ8mo'
 TOKEN_VALIDITY_PERIOD = 900  # 15 minutes in seconds
-
-def decrypt(encoded_ciphertext, encoded_iv):
-    # Decode the Base64 encoded ciphertext and IV
-    ciphertext = base64.b64decode(encoded_ciphertext)
-    iv = base64.b64decode(encoded_iv)
-    
-    cipher = Cipher(algorithms.AES(SECRET_KEY), modes.CFB(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    return (decryptor.update(ciphertext) + decryptor.finalize()).decode('utf-8')
 
 def generate_token(length=64):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
@@ -35,6 +21,7 @@ def is_token_valid(username):
 
     if username in data and "token" in data[username] and "token_expiry" in data[username]:
         if get_current_timestamp() < data[username]["token_expiry"]:
+            print("her2")
 
             return True
     return False
@@ -80,24 +67,25 @@ def setRootPassword():
 
 # On user login set isLoggedIn field to True to idenitify which user is logged in
 def set_current_user(username):
-    logout_current_user()
-    print("here")
     data = load_data()
-    data[username]["isLoggedIn"] = "true"
+    for user in data:
+        if data[user]["isLoggedIn"] == True:
+            data[user]["isLoggedIn"] = False
+
+    data[username]["isLoggedIn"] = True
     save_data(data)
 
 def logout_current_user():
     data = load_data()
     for user in data:
-        if data[user]["isLoggedIn"] == "true":
-            data[user]["isLoggedIn"] = "false"
+        if data[user]["isLoggedIn"] == True:
+            data[user]["isLoggedIn"] = False
             save_data(data)
     return
 
 # Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
     if username in load_data() and HashFunction.check_password(load_data()[username]['password'],password):
-        print("here1")
         set_current_user(username)
         return True
     
@@ -175,9 +163,7 @@ def json_data():
 @app.route("/admin_login", methods=["POST"])
 def admin_login():
     username = request.form.get("username")
-    notIV = request.form.get("notIV")
-    password = decrypt(request.form.get("password"),notIV)
-    print(password)
+    password = request.form.get("password")
     if authenticate(username, password) and load_data()[username]['group'] == 'admin':
         # Admin functionality here
         # For now, we just return a placeholder message
@@ -188,10 +174,10 @@ def admin_login():
 @app.route("/user_login", methods=["POST"])
 def user_login():
     username = request.form.get("username")
-    notIV = request.form.get("notIV")
-    password = decrypt(request.form.get("password"),notIV)
+    password = request.form.get("password")
+    
     # Check if token exists and is valid
-    if authenticate(username, password) and is_token_valid(username):
+    if is_token_valid(username):
         return "Token Valid"
     
     if authenticate(username, password):
@@ -339,7 +325,7 @@ def roster_shift():
 def getAdminStatus():
     data = load_data()
     for user in data:
-        if data[user]['isLoggedIn'] == "true" and data[user]['group'] == "admin":
+        if data[user]['isLoggedIn'] == True and data[user]['group'] == "admin":
             return str(True)
     return str(False)
 
