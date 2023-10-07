@@ -23,3 +23,10 @@ def check_password(hashed_password_str: str, user_password: str) -> bool:
         return bcrypt.checkpw(user_password.encode('utf-8'), hashed_password)
     except ValueError:
         return False
+    
+def check_two_hashed_passwords(password1, password2):
+    print(password1, password2)
+    if(password1 == password2):
+            return True
+    else: return False
+

@@ -1,11 +1,44 @@
+
 import json
 import os
+import base64
 import random, string
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, modes
+from cryptography.hazmat.primitives.ciphers import Cipher
 from flask import Flask, request, redirect, url_for, session
 import HashFunction
 import mailGun
 app = Flask(__name__)
+import time
 
+SECRET_KEY = b'6TXPMrtJBnkiJ8mo'
+TOKEN_VALIDITY_PERIOD = 900  # 15 minutes in seconds
+
+def decrypt(encoded_ciphertext, encoded_iv):
+    # Decode the Base64 encoded ciphertext and IV
+    ciphertext = base64.b64decode(encoded_ciphertext)
+    iv = base64.b64decode(encoded_iv)
+    
+    cipher = Cipher(algorithms.AES(SECRET_KEY), modes.CFB(iv), backend=default_backend())
+    decryptor = cipher.decryptor()
+    return (decryptor.update(ciphertext) + decryptor.finalize()).decode('utf-8')
+
+def generate_token(length=64):
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
+
+def get_current_timestamp():
+    return time.time()
+
+def is_token_valid(username):
+    data = load_data()
+
+    if username in data and "token" in data[username] and "token_expiry" in data[username]:
+        if get_current_timestamp() < data[username]["token_expiry"]:
+            print("her2")
+
+            return True
+    return False
 # Easy function call to open and load data to make changes later on
 def load_data():
     try:
@@ -144,7 +177,9 @@ def json_data():
 @app.route("/admin_login", methods=["POST"])
 def admin_login():
     username = request.form.get("username")
-    password = request.form.get("password")
+    notIV = request.form.get("notIV")
+    password = decrypt(request.form.get("password"),notIV)
+    print(password)
     if authenticate(username, password) and load_data()[username]['group'] == 'admin':
         # Admin functionality here
         # For now, we just return a placeholder message
@@ -155,17 +190,29 @@ def admin_login():
 @app.route("/user_login", methods=["POST"])
 def user_login():
     username = request.form.get("username")
-    password = request.form.get("password")
+    notIV = request.form.get("notIV")
+    password = decrypt(request.form.get("password"),notIV)
+    # Check if token exists and is valid
+    if is_token_valid(username):
+        return "Token Valid"
+    
     if authenticate(username, password):
         mfa_code = generate_random_code()
         data = load_data()
         if username in data:
+            
             email = data[username]["email"]
             mailGun.sendVerifcationCode(username, email, mfa_code)
             data[username]["MFAcode"] = mfa_code
+            
+            # Generate token and set its expiry
+            data[username]["token"] = generate_token()
+            data[username]["token_expiry"] = get_current_timestamp() + TOKEN_VALIDITY_PERIOD
             save_data(data)
+            
         return "True"
-    else: return "False"
+    else: 
+        return "False"
 @app.route("/verify_login", methods=["POST"])
 def verify_login():
     username = request.form.get("username")
