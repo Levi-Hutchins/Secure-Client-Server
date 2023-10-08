@@ -64,13 +64,26 @@ def userLogin(user_input):
 def adminConsole():
     print("--------------------------")
     print("Admin Controls:")
+    print("--------------------------")
+    # These four provide real functionality
     print("Add User:     add <username> <email_address>")
     print("Modify User:  modify <username> <change_group>")
     print("Delete User:  delete <username>")
     print("Log In:       login <username> <password>")
     print("--------------------------")
+    # These four only demonstrate the implemented access control
+    print("Add Expense:    <add expense>")
+    print("Add TimeSheets: <add timesheet>")
+    print("Add Meetings:   <add meetings")# secret
+    print("Audit Expenses:   <view expenses>")
+    print("Audit TimeSheets: <view timesheets>")
+    print("View Meetings:    <view meetings>") # secret
+    print("View Roster:      <view roster>") # Unclassified
+    print("View Shift:       <view shift")# Unclassified
+    print("--------------------------")
     user_input = input(">>> ").strip().split(' ', 2)
-    if user_input[0] == "add":
+
+    if len(user_input) == 3 and user_input[0] == "add" :
         userData = {"username":user_input[1],"email_address": user_input[2]}
         r = requests.post("http://127.0.0.1:2250/admin/add_user", data=userData)
         print(r.text)
@@ -84,6 +97,16 @@ def adminConsole():
         print(r.text)
     if user_input[0] == "login":
        userLogin(user_input)
+
+    if user_input[0] == "add" and user_input[1] == "expense": print(requests.post("http://127.0.0.1:2250/add_expense").text)
+    if user_input[0] == "add" and user_input[1] == "timesheet": print(requests.post("http://127.0.0.1:2250/submit_timesheet").text)
+    if user_input[0] == "add" and user_input[1] == "meetings": print(requests.post("http://127.0.0.1:2250/add_meeting_minutes").text)
+    if user_input[0] == "view" and user_input[1] == "expenses": print(requests.post("http://127.0.0.1:2250/audit_expenses").text)
+    if user_input[0] == "view" and user_input[1] == "timesheets": print(requests.post("http://127.0.0.1:2250/audit_timesheets").text)
+    if user_input[0] == "view" and user_input[1] == "meetings": print(requests.post("http://127.0.0.1:2250/view_meeting_minutes").text)
+    if user_input[0] == "view" and user_input[1] == "roster": print(requests.post("http://127.0.0.1:2250/view_roster").text)
+    if user_input[0] == "view" and user_input[1] == "shift": print(requests.post("http://127.0.0.1:2250/roster_shift").text)
+    
 
 
 

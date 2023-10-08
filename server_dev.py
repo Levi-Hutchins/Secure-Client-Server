@@ -30,6 +30,21 @@ def generate_token(length=64):
 def get_current_timestamp():
     return time.time()
 
+def check_required_permissions(securityLevel):
+    accessTree = {
+        "TopSecret": ["TopSecret", "Secret", "Unclassified"],
+        "Secret": ["Secret", "Unclassified"],
+        "Unclassified": ["Unclassified"]
+    }
+
+    data = load_data()
+    for user in data:
+        if data[user]["isLoggedIn"] == "true":
+            userSecurity = data[user]["securityLevel"]
+            if securityLevel in accessTree.get(userSecurity, []):
+                return True
+    return False
+
 def is_token_valid(username):
     data = load_data()
 
@@ -235,7 +250,8 @@ def add_user():
         "password": hashedPassword, 
         "group": "users",
         "email": email, 
-        "isLoggedIn": False
+        "isLoggedIn": False,
+        "securityLevel": "Unclassified"
     }
     data[username] = addedUser
     mailGun.sendUserDetails(username,generatedPassword,email)
@@ -251,6 +267,8 @@ def modify_user():
     data = load_data()
     if username in data:
         data[username]["group"] = groupChange
+        if groupChange == "admin":
+            data[username]["securityLevel"] = "TopSecret"
         save_data(data)
         return "\n ! User Modified ! \n"
     return "\n ! User Not Found ! \n"
@@ -270,70 +288,90 @@ def delete_user():
 
 @app.route("/audit_expenses", methods=["POST"])
 def audit_expenses():
-    if os.path.exists("data/expenses.txt"):
-        with open("data/expenses.txt", 'r') as f:
-            return f.read()
-    return "No expenses yet"
+    if check_required_permissions("TopSecret"):
+
+        if os.path.exists("data/expenses.txt"):
+            with open("data/expenses.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted !\n  No expenses yet\n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/add_expense", methods=["POST"])
 def add_expense():
-    if response.form:
-        with open("data/expenses.txt", 'a') as f:
-            f.write(response.form)
-        return "Expense added"
-    return "No expense was given"
+     if check_required_permissions("TopSecret"):
+        if request.form:
+            with open("data/expenses.txt", 'a') as f:
+                f.write(request.form)
+            return "Expense added"
+        return "\n ! Access Granted ! \n  No expense was given\n"
 
 
 @app.route("/audit_timesheets", methods=["POST"])
 def audit_timesheets():
-    if os.path.exists("data/timesheets.txt"):
-        with open("data/timesheets.txt", 'r') as f:
-            return f.read()
-    return "No timesheets yet"
+    if check_required_permissions("TopSecret"):
 
+        if os.path.exists("data/timesheets.txt"):
+            with open("data/timesheets.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted ! \n  No timesheets yet\n"
+    return "\n ! Access Denied ! \n"
+ 
 
 @app.route("/submit_timesheet", methods=["POST"])
 def submit_timesheet():
-    if response.form:
-        with open("data/timesheets.txt", 'a') as f:
-            f.write(response.form)
-        return "Timesheet added"
-    return "No timesheet was given"
+    if check_required_permissions("TopSecret"):
+        if request.form:
+            with open("data/timesheets.txt", 'a') as f:
+                f.write(request.form)
+            return "Timesheet added"
+        return "\n ! Access Granted ! \n  No timesheet was given\n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/view_meeting_minutes", methods=["POST"])
 def view_meeting_minutes():
-    if os.path.exists("data/meeting_minutes.txt"):
-        with open("data/meeting_minutes.txt", 'r') as f:
-            return f.read()
-    return "No meeting minutes yet"
+    if check_required_permissions("Secret"):
+        if os.path.exists("data/meeting_minutes.txt"):
+            with open("data/meeting_minutes.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted ! \n  No meetings yet \n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/add_meeting_minutes", methods=["POST"])
 def add_meeting_minutes():
-    if os.path.exists("data/meeting_minutes.txt"):
-        with open("data/meeting_minutes.txt", 'r') as f:
-            f.write(response.form)
-        return "Meeting minutes added"
-    return "No meeting minutes given"
+    if check_required_permissions("Secret"):
+
+        if os.path.exists("data/meeting_minutes.txt"):
+            with open("data/meeting_minutes.txt", 'r') as f:
+                f.write(request.form)
+            return "Meeting minutes added"
+        return "\n ! Access Granted ! \n  No minutes given \n"
+    return "\n ! Access Denied ! \n"
+
 
 
 @app.route("/view_roster", methods=["POST"])
 def view_roster():
-    if os.path.exists("data/roster.txt"):
-        with open("data/roster.txt", 'r') as f:
-            return f.read()
-    return "No roster yet"
+    if check_required_permissions("Unclassified"):
+        if os.path.exists("data/roster.txt"):
+            with open("data/roster.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted ! \n  No roster yet \n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/roster_shift", methods=["POST"])
 def roster_shift():
-    if os.path.exists("data/roster.txt"):
-        with open("data/roster.txt", 'r') as f:
-            f.write(response.form)
-        return "Shift rostered"
-    return "No shift given"
+    if check_required_permissions("Unclassified"):
+        if os.path.exists("data/roster.txt"):
+            with open("data/roster.txt", 'r') as f:
+                f.write(request.form)
+            return "Shift rostered"
+        return "\n ! Access Granted ! \n  No shift given \n"
+    return "\n ! Access Denied ! \n"
+
 
 @app.route("/adminStatus")
 def getAdminStatus():
