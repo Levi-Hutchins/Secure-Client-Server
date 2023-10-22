@@ -6,8 +6,8 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes
 from cryptography.hazmat.primitives.ciphers import Cipher
 import os
 
-# Define a secret key for symmetric encryption between client and server.
-SECRET_KEY = b'6TXPMrtJBnkiJ8mo'
+
+SECRET_KEY = b'6TXPMrtJBnkiJ8mo' # The secret key used for AES encryption/decryption
 
 # Function to encrypt data before sending it to the server.
 def encrypt_before_transmission(encryptMe):
@@ -115,14 +115,23 @@ def adminConsole():
 
     # Make calls to all endpoints to determine access level
     if user_input[0] == "test":
+        print("view_roster")
         print(requests.post("http://127.0.0.1:2250/view_roster").text)
+        print("roster_shift")
         print(requests.post("http://127.0.0.1:2250/roster_shift").text)
+        print("add_expense")
         print(requests.post("http://127.0.0.1:2250/add_expense").text)
+        print("submit_timesheet")
         print(requests.post("http://127.0.0.1:2250/submit_timesheet").text)
+        print("add_meeting_minutes")
         print(requests.post("http://127.0.0.1:2250/add_meeting_minutes").text)
+        print("audit_expenses")
         print(requests.post("http://127.0.0.1:2250/audit_expenses").text)
+        print("audit_timesheets")
         print(requests.post("http://127.0.0.1:2250/audit_timesheets").text)
+        print("view_meeting_minutes")
         print(requests.post("http://127.0.0.1:2250/view_meeting_minutes").text)
+        print("add_expense")
         print(requests.post("http://127.0.0.1:2250/add_expense").text)
 
 # UI
@@ -138,14 +147,23 @@ def userConsole():
 
     # Make calls to all endpoints to determine access level
     if user_input[0] == "test":
+        print("view_roster")
         print(requests.post("http://127.0.0.1:2250/view_roster").text)
+        print("roster_shift")
         print(requests.post("http://127.0.0.1:2250/roster_shift").text)
+        print("add_expense")
         print(requests.post("http://127.0.0.1:2250/add_expense").text)
+        print("submit_timesheet")
         print(requests.post("http://127.0.0.1:2250/submit_timesheet").text)
+        print("add_meeting_minutes")
         print(requests.post("http://127.0.0.1:2250/add_meeting_minutes").text)
+        print("audit_expenses")
         print(requests.post("http://127.0.0.1:2250/audit_expenses").text)
+        print("audit_timesheets")
         print(requests.post("http://127.0.0.1:2250/audit_timesheets").text)
+        print("view_meeting_minutes")
         print(requests.post("http://127.0.0.1:2250/view_meeting_minutes").text)
+        print("add_expense")
         print(requests.post("http://127.0.0.1:2250/add_expense").text)
 
 # Determine admin status to display admin interface

@@ -1,1 +1,12 @@
-{"root": {"password": "JDJiJDEyJFp6RWswRmFORnhSMlVzMWNmWnFBeS5SQ29VV2ZKT0NkMjdwUURFVGVTeFBnZmtjcjlrZkFh", "group": "admin", "email": "test@test.com", "isLoggedIn": "false", "securityLevel": "TopSecret"}, "BobSmith": {"password": "JDJiJDEyJERNeXB4M2pVSWNKeVBxRHFpcmw4aHVlMWUxVTZkSjFVM0x4RGlWZHR3eFlrU3JzRmQ1N3Ft", "group": "admin", "email": "ofingy101@gmail.com", "isLoggedIn": false, "securityLevel": "TopSecret"}, "SamSmith": {"password": "JDJiJDEyJE9DSmh6dkQ3a05zMTBsZDk1WmNBdC5NbFFLbzVLV044eVJDT2FwLkhsTXdzTWk5enVzWnBP", "group": "admin", "email": "ofingy101@gmail.com", "isLoggedIn": false, "securityLevel": "TopSecret", "MFAcode": "368638", "token": "0dyPjC8CApaQUiuVQqlDjcYMOtW8tsCw72Q0pSowop1xu83D04cyFIXmzBvPSQOk", "token_expiry": 1696727241.0763361}, "testuser": {"password": "JDJiJDEyJENtQzVzMzd0MVZWUk55d20yZHRhUmVEcGc4Q2c5WUhoakFpUlJ0c2FJbjc1TkRZOG96RzVl", "group": "users", "email": "ofingy101@gmail.com", "isLoggedIn": false, "securityLevel": "Unclassified", "MFAcode": "799726", "token": "iS6B5P7C14HdHaW7llWcDuHCFuWAY1acKOCb7bQIsjQDkAVBC4R8oWUdtLWeCpPQ", "token_expiry": 1697777859.6301272}, "levi": {"password": "JDJiJDEyJEVGUmN2ZXVUWXNvaEFTakozVkNSdXU1V2lGamJYbWdXQWg2LlhXNDkyNmp3bzMxdWRGRjJl", "group": "users", "email": "ofingy101@gmail.com", "isLoggedIn": "true", "securityLevel": "Unclassified", "MFAcode": "057383", "token": "vAgLlvbSGzhlW4LiHeAK0ZSYrM5Vs6rBNbw4WqI7pvtnJqsVsxFulxiI1pjpfke7", "token_expiry": 1697937962.1860101}}
+{
+  "root": {
+    "password": "JDJiJDEyJFFvZ0pMaHVpSng3dERlYjljV202dC55R1BSbHVmMWVSRDBaem4wS1pPTjRSV3V5SldBY2tT",
+    "group": "admin",
+    "email": "test@test.com",
+    "isLoggedIn": "true",
+    "securityLevel": "TopSecret",
+    "MFAcode": "157012",
+    "token": "2GiKs7abh5BTBWiTHn9hMwKd6WAi7ZXsXgnczjI9jTdVxGxPscU0eYPn5ccA9bUj",
+    "token_expiry": 1697944554.257609
+  }
+}

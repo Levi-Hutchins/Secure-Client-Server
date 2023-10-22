@@ -1,43 +1,16 @@
-# Adding Access Control and Authentication to an HTTP Server
+# Secure Client Server Program
+This program simulates a client server model whilst implementing secure programming techniques
+to ensure it meets the assignment requiremnets.
 
-For this task you will modify a http server program to provide authentication and access control for its various services.
+## Install requirements
+In order to run these programs there are a few new libraries which have been utilised to
+meet some of the requirements. To install them please open a terminal in the current directory
+and run the following command: pip install -r requirements.txt
+After that has complete you can proceed to run the programs detailed below.
 
-
-## Setup
-
-To run these programs you will need to install a recent version of python3, preferably version 3.7
-or higher.
-
-Next you will need to install the required libraries using the pip tool included with python, run the following
-in a terminal in this folder:
-
-```sh
-pip install -r requirements.txt
-```
-
-Sometimes you may get an error saying pip is not found despite having python installed, in that case you need to
-run `python -m pip install -r requirements.txt` instead.
-
-Now you're ready to run the programs.
-
-
-## Running the programs
-
-First we need to start the server with the following:
-
-```sh
-python3 server.py
-```
-
-It will say that is running on http://127.0.0.1:2250, which means you are ready to start the client with:
-
-```sh
-python3 client.py
-```
-
-The client goes through and tests each of the example endpoints of the server.
-
-# Your Task
-
-You will add an authentication mechanism and access control to the server as specified in the assignment specs.
-You will also extend the client program, to test each possible responses from the server.
+## How to run
+1. Naviagate to the directory in terminal containting all the files.
+2. In one terminal run the client file: python3 client.py.
+3. Open a new terminal and run the server file: python3 server.py.
+4. Paste the password printed by the server in the client program.
+5. From here you can use the client to perform any required actions.
