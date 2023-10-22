@@ -1,14 +1,28 @@
 
 import json
 import os
+import base64
 import random, string
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, modes
+from cryptography.hazmat.primitives.ciphers import Cipher
 from flask import Flask, request, redirect, url_for, session
-import HashFunction
-import mailGun
+import HashFunction as HashFunction
+import mailGun as mailGun
 app = Flask(__name__)
 import time
 
+SECRET_KEY = b'6TXPMrtJBnkiJ8mo'
 TOKEN_VALIDITY_PERIOD = 900  # 15 minutes in seconds
+
+def decrypt(encoded_ciphertext, encoded_iv):
+    # Decode the Base64 encoded ciphertext and IV
+    ciphertext = base64.b64decode(encoded_ciphertext)
+    iv = base64.b64decode(encoded_iv)
+    
+    cipher = Cipher(algorithms.AES(SECRET_KEY), modes.CFB(iv), backend=default_backend())
+    decryptor = cipher.decryptor()
+    return (decryptor.update(ciphertext) + decryptor.finalize()).decode('utf-8')
 
 def generate_token(length=64):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
@@ -16,26 +30,55 @@ def generate_token(length=64):
 def get_current_timestamp():
     return time.time()
 
+# fix access control - no write up, no read down. apply to endpoints directly 
+def check_required_permissions(securityLevel, operation):
+    readAccessTree = {
+        "TopSecret": ["TopSecret"],
+        "Secret": ["TopSecret","Secret", "Unclassified"],
+        "Unclassified": ["TopSecret","Secret","Unclassified"]
+    }
+
+    writeAccessTree = {
+        "TopSecret": ["TopSecret","Secret","Unclassified"],
+        "Secret": ["Secret","Unclassified"],
+        "Unclassified": ["Unclassified"]
+    }
+    if operation == "read":
+        accessTree = readAccessTree
+    elif operation == "write":
+        accessTree = writeAccessTree
+    else:
+        return False
+
+    
+
+    data = load_data()
+    for user in data:
+        if data[user]["isLoggedIn"] == "true":
+            userSecurity = data[user]["securityLevel"]
+            if securityLevel in accessTree.get(userSecurity, []):
+                return True
+    return False
+
 def is_token_valid(username):
     data = load_data()
 
     if username in data and "token" in data[username] and "token_expiry" in data[username]:
         if get_current_timestamp() < data[username]["token_expiry"]:
-            print("her2")
 
             return True
     return False
 # Easy function call to open and load data to make changes later on
 def load_data():
     try:
-        with open("./data/users_db.json", 'r') as f:
+        with open("./users_db.json", 'r') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
 # Easy function call to save data after manipulation
 def save_data(data):
-    with open("./data/users_db.json", 'w') as f:
+    with open("./users_db.json", 'w') as f:
         json.dump(data, f)
 
 # Generates random code used for MFA
@@ -67,25 +110,24 @@ def setRootPassword():
 
 # On user login set isLoggedIn field to True to idenitify which user is logged in
 def set_current_user(username):
+    logout_current_user()
+    print("here")
     data = load_data()
-    for user in data:
-        if data[user]["isLoggedIn"] == True:
-            data[user]["isLoggedIn"] = False
-
-    data[username]["isLoggedIn"] = True
+    data[username]["isLoggedIn"] = "true"
     save_data(data)
 
 def logout_current_user():
     data = load_data()
     for user in data:
-        if data[user]["isLoggedIn"] == True:
-            data[user]["isLoggedIn"] = False
+        if data[user]["isLoggedIn"] == "true":
+            data[user]["isLoggedIn"] = "false"
             save_data(data)
     return
 
 # Authenticate users attempting to log in with users in the database
 def authenticate(username, password):
     if username in load_data() and HashFunction.check_password(load_data()[username]['password'],password):
+        print("here1")
         set_current_user(username)
         return True
     
@@ -102,6 +144,10 @@ def resetDB():
 def hello_world():
     
     return "Hello, World!"
+@app.route("/fetch_token")
+def getUserToken():
+    data = load_data()
+    
 
 
 
@@ -163,7 +209,9 @@ def json_data():
 @app.route("/admin_login", methods=["POST"])
 def admin_login():
     username = request.form.get("username")
-    password = request.form.get("password")
+    notIV = request.form.get("notIV")
+    password = decrypt(request.form.get("password"),notIV)
+    print(password)
     if authenticate(username, password) and load_data()[username]['group'] == 'admin':
         # Admin functionality here
         # For now, we just return a placeholder message
@@ -174,10 +222,10 @@ def admin_login():
 @app.route("/user_login", methods=["POST"])
 def user_login():
     username = request.form.get("username")
-    password = request.form.get("password")
-    
+    notIV = request.form.get("notIV")
+    password = decrypt(request.form.get("password"),notIV)
     # Check if token exists and is valid
-    if is_token_valid(username):
+    if authenticate(username, password) and is_token_valid(username):
         return "Token Valid"
     
     if authenticate(username, password):
@@ -221,7 +269,8 @@ def add_user():
         "password": hashedPassword, 
         "group": "users",
         "email": email, 
-        "isLoggedIn": False
+        "isLoggedIn": False,
+        "securityLevel": "Unclassified"
     }
     data[username] = addedUser
     mailGun.sendUserDetails(username,generatedPassword,email)
@@ -234,9 +283,13 @@ def add_user():
 def modify_user():
     username = request.form.get("username")
     groupChange = request.form.get("group")
+    if groupChange not in ["admin","users"]:
+        return "\n! User group must be either admin or users !\n "
     data = load_data()
     if username in data:
         data[username]["group"] = groupChange
+        if groupChange == "admin":
+            data[username]["securityLevel"] = "TopSecret"
         save_data(data)
         return "\n ! User Modified ! \n"
     return "\n ! User Not Found ! \n"
@@ -256,91 +309,106 @@ def delete_user():
 
 @app.route("/audit_expenses", methods=["POST"])
 def audit_expenses():
-    if os.path.exists("data/expenses.txt"):
-        with open("data/expenses.txt", 'r') as f:
-            return f.read()
-    return "No expenses yet"
+    if check_required_permissions("TopSecret","read"):
+
+        if os.path.exists("data/expenses.txt"):
+            with open("data/expenses.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted !\n  No expenses yet\n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/add_expense", methods=["POST"])
 def add_expense():
-    if response.form:
-        with open("data/expenses.txt", 'a') as f:
-            f.write(response.form)
-        return "Expense added"
-    return "No expense was given"
+    if check_required_permissions("TopSecret","write"):
+        if request.form:
+            with open("data/expenses.txt", 'a') as f:
+                f.write(request.form)
+            return "Expense added"
+        return "\n ! Access Granted ! \n  No expense was given\n"
+    return "\n ! Access Denied ! \n"
+
 
 
 @app.route("/audit_timesheets", methods=["POST"])
 def audit_timesheets():
-    if os.path.exists("data/timesheets.txt"):
-        with open("data/timesheets.txt", 'r') as f:
-            return f.read()
-    return "No timesheets yet"
+    if check_required_permissions("TopSecret","read"):
 
+        if os.path.exists("data/timesheets.txt"):
+            with open("data/timesheets.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted ! \n  No timesheets yet\n"
+    return "\n ! Access Denied ! \n"
+ 
 
 @app.route("/submit_timesheet", methods=["POST"])
 def submit_timesheet():
-    if response.form:
-        with open("data/timesheets.txt", 'a') as f:
-            f.write(response.form)
-        return "Timesheet added"
-    return "No timesheet was given"
+    if check_required_permissions("TopSecret","write"):
+        if request.form:
+            with open("data/timesheets.txt", 'a') as f:
+                f.write(request.form)
+            return "Timesheet added"
+        return "\n ! Access Granted ! \n  No timesheet was given\n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/view_meeting_minutes", methods=["POST"])
 def view_meeting_minutes():
-    if os.path.exists("data/meeting_minutes.txt"):
-        with open("data/meeting_minutes.txt", 'r') as f:
-            return f.read()
-    return "No meeting minutes yet"
+    if check_required_permissions("Secret","read"):
+        if os.path.exists("data/meeting_minutes.txt"):
+            with open("data/meeting_minutes.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted ! \n  No meetings yet \n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/add_meeting_minutes", methods=["POST"])
 def add_meeting_minutes():
-    if os.path.exists("data/meeting_minutes.txt"):
-        with open("data/meeting_minutes.txt", 'r') as f:
-            f.write(response.form)
-        return "Meeting minutes added"
-    return "No meeting minutes given"
+    if check_required_permissions("Secret","write"):
+
+        if os.path.exists("data/meeting_minutes.txt"):
+            with open("data/meeting_minutes.txt", 'r') as f:
+                f.write(request.form)
+            return "Meeting minutes added"
+        return "\n ! Access Granted ! \n  No minutes given \n"
+    return "\n ! Access Denied ! \n"
+
 
 
 @app.route("/view_roster", methods=["POST"])
 def view_roster():
-    if os.path.exists("data/roster.txt"):
-        with open("data/roster.txt", 'r') as f:
-            return f.read()
-    return "No roster yet"
+    if check_required_permissions("Unclassified","read"):
+        if os.path.exists("data/roster.txt"):
+            with open("data/roster.txt", 'r') as f:
+                return f.read()
+        return "\n ! Access Granted ! \n  No roster yet \n"
+    return "\n ! Access Denied ! \n"
 
 
 @app.route("/roster_shift", methods=["POST"])
 def roster_shift():
-    if os.path.exists("data/roster.txt"):
-        with open("data/roster.txt", 'r') as f:
-            f.write(response.form)
-        return "Shift rostered"
-    return "No shift given"
+    if check_required_permissions("Unclassified","write"):
+        if os.path.exists("data/roster.txt"):
+            with open("data/roster.txt", 'r') as f:
+                f.write(request.form)
+            return "Shift rostered"
+        return "\n ! Access Granted ! \n  No shift given \n"
+    return "\n ! Access Denied ! \n"
+
 
 @app.route("/adminStatus")
 def getAdminStatus():
     data = load_data()
     for user in data:
-        if data[user]['isLoggedIn'] == True and data[user]['group'] == "admin":
+        if data[user]['isLoggedIn'] == "true" and data[user]['group'] == "admin":
             return str(True)
     return str(False)
 
-@app.route("/logout_user")
-def logOut():
-    data = load_data()
-    for user in data:
-        data[user]['isLoggedIn'] = False
-    save_data(data)
-    return "\n ! Logged Out ! \n"
+
 
 
 @app.route("/dataview", methods=["GET"])
 def data_view():
-    # Try to read the JSON file and return its contents
     try:
         with open('./data/users_db.json', 'r') as file:
             users_data = json.load(file)

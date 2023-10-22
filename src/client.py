@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes
 from cryptography.hazmat.primitives.ciphers import Cipher
 import os
 SECRET_KEY = b'6TXPMrtJBnkiJ8mo'
-
+clientToken = 0
 current_token = None
 def encrypt_before_transmission(encryptMe):
     iv = os.urandom(16)
@@ -71,15 +71,8 @@ def adminConsole():
     print("Delete User:  delete <username>")
     print("Log In:       login <username> <password>")
     print("--------------------------")
-    # These four only demonstrate the implemented access control
-    print("Add Expense:    <add expense>")
-    print("Add TimeSheets: <add timesheet>")
-    print("Add Meetings:   <add meetings")# secret
-    print("Audit Expenses:   <view expenses>")
-    print("Audit TimeSheets: <view timesheets>")
-    print("View Meetings:    <view meetings>") # secret
-    print("View Roster:      <view roster>") # Unclassified
-    print("View Shift:       <view shift")# Unclassified
+    # These eight only demonstrate the implemented access control
+    print("Test Endpoint Access Control: <test>")
     print("--------------------------")
     user_input = input(">>> ").strip().split(' ', 2)
 
@@ -98,28 +91,38 @@ def adminConsole():
     if user_input[0] == "login":
        userLogin(user_input)
 
-    if user_input[0] == "add" and user_input[1] == "expense": print(requests.post("http://127.0.0.1:2250/add_expense").text)
-    if user_input[0] == "add" and user_input[1] == "timesheet": print(requests.post("http://127.0.0.1:2250/submit_timesheet").text)
-    if user_input[0] == "add" and user_input[1] == "meetings": print(requests.post("http://127.0.0.1:2250/add_meeting_minutes").text)
-    if user_input[0] == "view" and user_input[1] == "expenses": print(requests.post("http://127.0.0.1:2250/audit_expenses").text)
-    if user_input[0] == "view" and user_input[1] == "timesheets": print(requests.post("http://127.0.0.1:2250/audit_timesheets").text)
-    if user_input[0] == "view" and user_input[1] == "meetings": print(requests.post("http://127.0.0.1:2250/view_meeting_minutes").text)
-    if user_input[0] == "view" and user_input[1] == "roster": print(requests.post("http://127.0.0.1:2250/view_roster").text)
-    if user_input[0] == "view" and user_input[1] == "shift": print(requests.post("http://127.0.0.1:2250/roster_shift").text)
-    
-
-
-
-
+    if user_input[0] == "test":
+        print(requests.post("http://127.0.0.1:2250/view_roster").text)
+        print(requests.post("http://127.0.0.1:2250/roster_shift").text)
+        print(requests.post("http://127.0.0.1:2250/add_expense").text)
+        print(requests.post("http://127.0.0.1:2250/submit_timesheet").text)
+        print(requests.post("http://127.0.0.1:2250/add_meeting_minutes").text)
+        print(requests.post("http://127.0.0.1:2250/audit_expenses").text)
+        print(requests.post("http://127.0.0.1:2250/audit_timesheets").text)
+        print(requests.post("http://127.0.0.1:2250/view_meeting_minutes").text)
+        print(requests.post("http://127.0.0.1:2250/add_expense").text)
 
 def userConsole():
     print("------------------------")
     print("User Controls:")
     print("Log In: <username> <password>")
+    print("Test Endpoint Access Control: <test>")
     print("------------------------")
     user_input = input(">>> ").strip().split(' ', 2)
-
-
+    if user_input[0] == "login":
+       userLogin(user_input)
+    # I have added all the possible endpoint to showcase that the access control is working correctly.
+    # The user Console is for users that are not admin so none of these will work unless have the required security level
+    if user_input[0] == "test":
+        print(requests.post("http://127.0.0.1:2250/view_roster").text)
+        print(requests.post("http://127.0.0.1:2250/roster_shift").text)
+        print(requests.post("http://127.0.0.1:2250/add_expense").text)
+        print(requests.post("http://127.0.0.1:2250/submit_timesheet").text)
+        print(requests.post("http://127.0.0.1:2250/add_meeting_minutes").text)
+        print(requests.post("http://127.0.0.1:2250/audit_expenses").text)
+        print(requests.post("http://127.0.0.1:2250/audit_timesheets").text)
+        print(requests.post("http://127.0.0.1:2250/view_meeting_minutes").text)
+        print(requests.post("http://127.0.0.1:2250/add_expense").text)
 def isAdmin():
     if requests.get("http://127.0.0.1:2250/adminStatus").text == "True":
         return True
@@ -127,8 +130,6 @@ def isAdmin():
     
 
 loopCount = 0
-loggedInFlag = False
-# TODO: add exit option if selected logs out all users
 if __name__ == "__main__":
     while True:
         if loopCount == 0:
@@ -152,23 +153,6 @@ if __name__ == "__main__":
 
         
 
-
-
-
-
-
-
-    # r = requests.get("http://127.0.0.1:2250/lost_page")
-    # print(r.status_code)
-    # if r.status_code == 404:
-    #     print("The page was not found")
-
-    # # For more complicated responses, e.g. when the server returns a dictionary, you can use the json() method
-    # # to process as a dictionary
-    # r = requests.get("http://127.0.0.1:2250/json")
-    # print(r.json())
-
-    # testAdminLogin()
 
   
 
