@@ -24,9 +24,5 @@ def check_password(hashed_password_str: str, user_password: str) -> bool:
     except ValueError:
         return False
     
-def check_two_hashed_passwords(password1, password2):
-    print(password1, password2)
-    if(password1 == password2):
-            return True
-    else: return False
+
 

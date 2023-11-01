@@ -1,12 +1,1 @@
-{
-  "root": {
-    "password": "JDJiJDEyJFFvZ0pMaHVpSng3dERlYjljV202dC55R1BSbHVmMWVSRDBaem4wS1pPTjRSV3V5SldBY2tT",
-    "group": "admin",
-    "email": "test@test.com",
-    "isLoggedIn": "true",
-    "securityLevel": "TopSecret",
-    "MFAcode": "157012",
-    "token": "2GiKs7abh5BTBWiTHn9hMwKd6WAi7ZXsXgnczjI9jTdVxGxPscU0eYPn5ccA9bUj",
-    "token_expiry": 1697944554.257609
-  }
-}
+{"root": {"password": "JDJiJDEyJHF1WmxmYUx2aDMvMmxWLjJRaDQ0YS5qZjlrdUZNSzNPQVluU1ZUN3JPeE5Td3ZEcFBPZkph", "group": "admin", "email": "test@test.com", "isLoggedIn": "true", "securityLevel": "TopSecret", "MFAcode": "157012", "token": "2GiKs7abh5BTBWiTHn9hMwKd6WAi7ZXsXgnczjI9jTdVxGxPscU0eYPn5ccA9bUj"}}

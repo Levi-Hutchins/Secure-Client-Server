@@ -41,7 +41,7 @@ def check_required_permissions(securityLevel, operation):
     # These lists dictate which security levels a user can read from, based on their own security level
     readAccessTree = {
         "TopSecret": ["TopSecret"],
-        "Secret": ["TopSecret", "Secret", "Unclassified"],
+        "Secret": ["TopSecret", "Secret"],
         "Unclassified": ["TopSecret", "Secret", "Unclassified"]
     }
 
@@ -68,6 +68,7 @@ def check_required_permissions(securityLevel, operation):
             # Check if the desired security level is in the list of levels the user can access.
             if securityLevel in accessTree.get(userSecurity, []):
                 return True
+            else: return False
     return False
 
 # Check the token stored with the current user and if associated expiry date is valid
